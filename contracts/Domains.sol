@@ -19,8 +19,8 @@ contract Domains is ERC721URIStorage {
 
   uint constant MAX_LENGTH = 13;
 
-
-
+  // Owner of the contract that can withdraw funds
+  address payable public owner;
   // Top-level domain that users will register under
   string public tld;
 
@@ -28,8 +28,15 @@ contract Domains is ERC721URIStorage {
   mapping(string => address) public domains;
   // Mapping of domain -> actual record
   mapping(string => string) public records;
+  mapping (uint => string) public names;
 
-  constructor(string memory _tld) payable ERC721("Music Name Service", "MUS") {
+  // Errors
+  error Unauthorized();
+  error AlreadyRegistered();
+  error InvalidName(string name);
+
+  constructor(string memory _tld) ERC721("Music Name Service", "MUS") payable {
+    owner = payable(msg.sender);
     tld = _tld;
     console.log("%s name service deployed!", _tld);
   }
@@ -39,7 +46,7 @@ contract Domains is ERC721URIStorage {
     uint len = StringUtils.strlen(name);
     require(len > 1, "Domain length must be greater than 0!");
 
-    if (len <= 3) {
+    if (len == 3) {
       return 5 * 10**17;
     } else if (len == 4) {
       return 3 * 10**17;
@@ -48,8 +55,13 @@ contract Domains is ERC721URIStorage {
     }
   }
 
+  function valid(string calldata name) public pure returns(bool) {
+    return StringUtils.strlen(name) >= 3 && StringUtils.strlen(name) <= 10;
+  }
+
   function register(string calldata name) public payable {
-    require(domains[name] == address(0));
+    if (domains[name] != address(0)) revert AlreadyRegistered();
+    if (!valid(name)) revert InvalidName(name);
 
     uint _price = price(name);
     // Make sure there was enough paid in the transaction
@@ -90,6 +102,7 @@ contract Domains is ERC721URIStorage {
     _safeMint(msg.sender, newRecordId);
     _setTokenURI(newRecordId, finalTokenUri);
     domains[name] = msg.sender;
+    names[newRecordId] = name;
 
     _tokenIds.increment();
   }
@@ -99,11 +112,39 @@ contract Domains is ERC721URIStorage {
   }
 
   function setRecord(string calldata name, string calldata record) public {
-    require(domains[name] == msg.sender, "Cannot set record for a domain you do not own!");
+    if (msg.sender != domains[name]) revert Unauthorized();
     records[name] = record;
   }
 
   function getRecord(string calldata name) public view returns (string memory) {
     return records[name];
+  }
+
+  function getAllNames() public view returns (string[] memory) {
+    console.log("Getting all names from contract");
+    string[] memory allNames = new string[](_tokenIds.current());
+    for (uint i = 0; i < _tokenIds.current(); i++) {
+      allNames[i] = names[i];
+      console.log("Name for token %d is %s", i, allNames[i]);
+
+    }
+
+    return allNames;
+  }
+
+  function isOwner() public view returns (bool) {
+    return msg.sender == owner;
+  }
+
+  modifier onlyOwner() {
+    require(isOwner());
+    _;
+  }
+
+  function withdraw() public onlyOwner {
+    uint amount = address(this).balance;
+
+	(bool success, ) = msg.sender.call{value: amount}("");
+	require(success, "Failed to withdraw Matic");
   }
 }

@@ -5,11 +5,11 @@ const main = async () => {
 
   console.log("Contract deployed to:", domainContract.address);
 
-  let txn = await domainContract.register("twice",  {value: hre.ethers.utils.parseEther('0.1')});
+  let txn = await domainContract.register("twice", "2qQpFbqqkLOGySgNK8wBXt",  {value: hre.ethers.utils.parseEther('0.1')});
   await txn.wait();
   console.log("Minted domain twice.mus");
 
-  txn = await domainContract.setRecord("twice", 'https://open.spotify.com/track/2qQpFbqqkLOGySgNK8wBXt');
+  txn = await domainContract.setRecord("twice", '2qQpFbqqkLOGySgNK8wBXt');
   await txn.wait();
   console.log("Set record for twice.mus");
 

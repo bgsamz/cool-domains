@@ -7,7 +7,7 @@ const main = async () => {
   console.log("Contract deployed to:", domainContract.address);
   console.log("Contract deployed by:", owner.address);
 
-  let txn = await domainContract.register("twice", {value: hre.ethers.utils.parseEther('420')});
+  let txn = await domainContract.register("twice", "fakerecord", {value: hre.ethers.utils.parseEther('420')});
   await txn.wait();
 
   const domainOwner = await domainContract.getAddress("twice");
@@ -17,14 +17,14 @@ const main = async () => {
   console.log("Contract balance:", hre.ethers.utils.formatEther(balance));
 
   try {
-    let txn = await domainContract.register("twice", {value: hre.ethers.utils.parseEther('1')});
+    let txn = await domainContract.register("twice", "fakerecord", {value: hre.ethers.utils.parseEther('1')});
     await txn.wait();
   } catch (error) {
     console.log("Expected error while attempting to register same domain twice!", error);
   }
 
   try {
-    let txn = await domainContract.register("2", {value: hre.ethers.utils.parseEther('1')});
+    let txn = await domainContract.register("2", "fakerecord", {value: hre.ethers.utils.parseEther('1')});
     await txn.wait();
   } catch (error) {
     console.log("Expected error while attempting to register domain with invalid name!", error);

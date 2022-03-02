@@ -11,13 +11,13 @@ import { Base64 } from "./libraries/Base64.sol";
 import "hardhat/console.sol";
 
 contract Domains is ERC721URIStorage {
-  using Counters for Counters.Counter;
-  Counters.Counter private _tokenIds;
-
+  string constant TOKEN_NAME = "Music Name Service";
+  string constant TOKEN_SYMBOL = "MUS";
   string constant SVG_PREFIX = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" style="background-color:#3091ff"><defs><pattern id="a" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(35) scale(3)"><path d="M7.93 25.486v-6l8.83 5.1v6l-8.83-5.1Z" fill="#ffb05f"/><path d="M16.76 30.587v-6l12.08-1.86.003 6-12.083 1.86Z" fill="#c55000"/><path d="M32.07 21.747v-6l-3.23 6.98v6l3.23-6.98Z" fill="#ffb05f"/><path d="m11.161 12.516 12.074-1.867 8.839 5.102-3.235 6.97-12.074 1.868-8.84-5.102 3.236-6.97Z" fill="#ff7f30"/></pattern><filter id="b" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="800" width="800"><feDropShadow dx="2" dy="3" stdDeviation="10" flood-opacity="225" width="200%" height="200%"/></filter></defs><path fill="url(#a)" filter="url(#b)" d="M0 0h800v800H0z" transform="scale(1.5)"/><path filter="url(#b)" d="M218.589 128.847a13.147 13.147 0 0 0-13.182 0l-30.243 18.096-20.55 11.802-30.243 18.096a13.147 13.147 0 0 1-13.182 0L87.15 162.678a13.56 13.56 0 0 1-4.767-4.848 13.623 13.623 0 0 1-1.824-6.561v-27.93a12.813 12.813 0 0 1 1.716-6.624 12.75 12.75 0 0 1 4.875-4.785l23.652-13.77a13.147 13.147 0 0 1 13.182 0l23.652 13.77a13.56 13.56 0 0 1 4.767 4.848 13.623 13.623 0 0 1 1.824 6.561v18.096l20.55-12.195v-18.096a12.813 12.813 0 0 0-1.716-6.624 12.75 12.75 0 0 0-4.875-4.785L124.368 73.77a13.147 13.147 0 0 0-13.182 0L66.594 99.735a12.75 12.75 0 0 0-4.875 4.785 12.82 12.82 0 0 0-1.716 6.624v52.323a12.813 12.813 0 0 0 1.716 6.624 12.75 12.75 0 0 0 4.875 4.785l44.592 25.965a13.147 13.147 0 0 0 13.182 0l30.243-17.703 20.55-12.195 30.243-17.703a13.147 13.147 0 0 1 13.182 0l23.652 13.77a13.56 13.56 0 0 1 4.767 4.848 13.623 13.623 0 0 1 1.824 6.561v27.933a12.813 12.813 0 0 1-1.716 6.624 12.75 12.75 0 0 1-4.875 4.785l-23.652 14.163a13.147 13.147 0 0 1-13.182 0l-23.652-13.77a13.56 13.56 0 0 1-4.767-4.848 13.59 13.59 0 0 1-1.824-6.561v-18.096l-20.55 12.195v18.096a12.813 12.813 0 0 0 1.716 6.624 12.75 12.75 0 0 0 4.875 4.785l44.592 25.965a13.147 13.147 0 0 0 13.182 0l44.592-25.965c1.971-1.182 3.612-2.85 4.767-4.848s1.782-4.254 1.827-6.561v-52.326a12.813 12.813 0 0 0-1.716-6.624 12.75 12.75 0 0 0-4.875-4.785l-44.979-26.358z" fill="#fff"/><text x="96" y="685" font-size="80" fill="#fff" filter="url(#b)" font-family="Plus Jakarta Sans,DejaVu Sans,Noto Color Emoji,Apple Color Emoji,sans-serif" font-weight="bold">';
   string constant SVG_SUFFIX = '</text></svg>';
 
-  uint constant MAX_LENGTH = 13;
+  using Counters for Counters.Counter;
+  Counters.Counter private _tokenIds;
 
   // Owner of the contract that can withdraw funds
   address payable public owner;
@@ -35,7 +35,7 @@ contract Domains is ERC721URIStorage {
   error AlreadyRegistered();
   error InvalidName(string name);
 
-  constructor(string memory _tld) ERC721("Music Name Service", "MUS") payable {
+  constructor(string memory _tld) ERC721(TOKEN_NAME, TOKEN_SYMBOL) payable {
     owner = payable(msg.sender);
     tld = _tld;
     console.log("%s name service deployed!", _tld);
@@ -59,7 +59,7 @@ contract Domains is ERC721URIStorage {
     return StringUtils.strlen(name) >= 3 && StringUtils.strlen(name) <= 10;
   }
 
-  function register(string calldata name) public payable {
+  function register(string calldata name, string calldata record) public payable {
     if (domains[name] != address(0)) revert AlreadyRegistered();
     if (!valid(name)) revert InvalidName(name);
 
@@ -102,6 +102,7 @@ contract Domains is ERC721URIStorage {
     _safeMint(msg.sender, newRecordId);
     _setTokenURI(newRecordId, finalTokenUri);
     domains[name] = msg.sender;
+    records[name] = record;
     names[newRecordId] = name;
 
     _tokenIds.increment();
